@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>SelfSealingAirlocks</RootNamespace>
+    <AssemblyName>SelfSealingAirlocks</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <!--
+      Always compile against the game's CURRENT DLLs. Compiling against an old
+      copy is what caused the "Method not found: SimMessages.SetCellProperties"
+      crash after the U57 update.
+      Override on the command line if your install is elsewhere:
+        dotnet build SelfSealingAirlocksRevivedV2.csproj -c Release -p:GameManaged="D:\SteamLibrary\steamapps\common\OxygenNotIncluded\OxygenNotIncluded_Data\Managed"
+    -->
+    <GameManaged Condition="'$(GameManaged)' == ''">C:\Program Files (x86)\Steam\steamapps\common\OxygenNotIncluded\OxygenNotIncluded_Data\Managed</GameManaged>
+
+    <!-- Set to your Klei mods folder to auto-copy the build into mods\dev for testing. Off by default. -->
+    <ModsDevDir Condition="'$(ModsDevDir)' == ''"></ModsDevDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Game assemblies: referenced only, never copied into the mod folder. -->
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp" HintPath="$(GameManaged)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Assembly-CSharp-firstpass" HintPath="$(GameManaged)\Assembly-CSharp-firstpass.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(GameManaged)\0Harmony.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(GameManaged)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(GameManaged)\UnityEngine.CoreModule.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="SolutionItems\**" />
+    <None Remove="ReleaseFiles\**" />
+    <Compile Remove="ReleaseFiles\**" />
+  </ItemGroup>
+
+  <!-- Collect the files that make up the mod into ReleaseFiles\ (what gets uploaded to the Workshop). -->
+  <Target Name="PackageMod" AfterTargets="Build">
+    <ItemGroup>
+      <ModFiles Include="$(TargetPath);mod.yaml;mod_info.yaml" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ProjectDir)ReleaseFiles" />
+    <Copy Condition="'$(ModsDevDir)' != ''" SourceFiles="@(ModFiles)" DestinationFolder="$(ModsDevDir)\SelfSealingAirlocksRevivedV2" />
+  </Target>
+</Project>

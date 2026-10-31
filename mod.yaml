@@ -1,0 +1,3 @@
+title: "Self-sealing Airlocks Revived V2"
+description: "Airlocks (all doors except the pneumatic door) stay airtight while set to Auto or Locked: gases and liquids can't pass even when a duplicant walks through. Set a door to Open to let gas and liquid through. Updated for game build U57-704096 and later. Based on Self-sealing Airlocks by chromiumboy and Self-sealing Airlocks Revived by LoneMarauder."
+staticID: "selfSealingAirlocksRevivedV2"
