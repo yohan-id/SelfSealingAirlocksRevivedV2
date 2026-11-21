@@ -55,10 +55,22 @@ namespace SelfSealingAirlocks
     [HarmonyPatch(typeof(Door), "SetSimState")]
     internal static class SelfSealingAirlocks_Door_SetSimState
     {
+        // Only the Manual Airlock and the Mechanized Airlock self-seal. Every
+        // other door (Pneumatic, Insulated, Wooden, Bunker, POI doors, ...)
+        // keeps its vanilla behaviour.
+        private static readonly Tag ManualAirlock = new Tag("ManualPressureDoor");
+        private static readonly Tag MechanizedAirlock = new Tag("PressureDoor");
+
+        internal static bool IsSelfSealingDoor(Door door)
+        {
+            Tag id = door.PrefabID();
+            return id == ManualAirlock || id == MechanizedAirlock;
+        }
+
         private static bool Prefix(Door __instance, ref bool is_door_open, IList<int> cells)
         {
             if (!is_door_open
-                || __instance.doorType == Door.DoorType.Internal
+                || !IsSelfSealingDoor(__instance)
                 || __instance.CurrentState == Door.ControlState.Opened)
             {
                 return true; // vanilla behaviour
@@ -113,7 +125,7 @@ namespace SelfSealingAirlocks
 
         private static void Postfix(Door __instance)
         {
-            if (__instance.doorType == Door.DoorType.Internal
+            if (!SelfSealingAirlocks_Door_SetSimState.IsSelfSealingDoor(__instance)
                 || __instance.CurrentState != Door.ControlState.Opened
                 || !__instance.IsOpen())
             {
@@ -132,6 +144,8 @@ namespace SelfSealingAirlocks
     // cell, and that flag is stored in the save. Vanilla never sets or clears
     // it on doors, so clear it when a door loads; otherwise doors set to "Open"
     // (and cells of later-deconstructed doors) would keep blocking gas.
+    // This runs for every door type, not just the two self-sealing airlocks,
+    // because older versions sealed other non-pneumatic doors as well.
     [HarmonyPatch(typeof(Door), "OnSpawn")]
     internal static class SelfSealingAirlocks_Door_OnSpawn
     {

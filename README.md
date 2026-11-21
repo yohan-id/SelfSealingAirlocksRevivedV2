@@ -5,7 +5,7 @@ An [Oxygen Not Included](https://store.steampowered.com/app/457140/) mod that ma
 - **Auto** or **Locked**: the door stays sealed. Gases and liquids can't pass, even while a duplicant is walking through.
 - **Open**: the door behaves like vanilla, so gas and liquid flow through.
 
-It applies to every door except the Pneumatic Door, which is left vanilla.
+It applies only to the **Manual Airlock** and the **Mechanized Airlock**. Every other door (Pneumatic, Insulated, Wooden, Bunker, ...) is left vanilla.
 
 This version fixes the crash reported after the 2026 game updates (build U57-704096):
 
@@ -35,6 +35,8 @@ Modified by [yohan-id](https://github.com/yohan-id), 2026-10-31.
 - **Works with the game's door code.** The old patch replaced `Door.SetSimState` completely. V2 only steps in when a door in Auto/Locked mode swings open for a duplicant, and keeps the door's cells solid. Everything else runs the vanilla code, including temperature, insulation, falling sand and rendering. The patch no longer calls the sim API that broke, so game updates are less likely to break it.
 - **Fixed:** in Auto mode the old patch kept the cell solid but still switched the door's temperature handling to "open", which could cause heat glitches.
 - **Fixed:** switching a door to Open while a duplicant stood in the doorway left it sealed.
+- **Fixed:** a crash when a duplicant changed a manual airlock's setting (the mod patched doors too early during startup, which broke the door's interaction animation).
+- **Only the two airlocks self-seal.** Earlier versions sealed every door except the Pneumatic Door. Newer doors such as the Insulated Door now keep their vanilla behaviour.
 - **Save cleanup:** earlier versions stamped a GasImpermeable flag on airlock cells, and saves keep it. V2 clears it when a door loads, so doors set to Open pass gas again.
 - **Removed** the animation-override patch, which the game now does itself, and an unused `config.json`.
 - **Build** targets .NET Framework 4.8 and compiles against your installed game's DLLs instead of copies checked into the repo.
