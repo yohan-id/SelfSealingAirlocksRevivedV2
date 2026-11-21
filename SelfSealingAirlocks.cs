@@ -4,6 +4,43 @@ using HarmonyLib;
 
 namespace SelfSealingAirlocks
 {
+    // Door's static constructor fills Door.OVERRIDE_ANIMS with
+    // Assets.GetAnim("anim_use_remote_kanim"). Patching Door through the default
+    // UserMod2.OnLoad (Harmony.PatchAll at mod load) runs that constructor before
+    // the game has loaded any anims, so the array holds null forever. A dupe
+    // doing the manual-airlock "change control state" errand (e.g. setting a
+    // door to Open) then crashes in KAnimControllerBase.AddAnimOverrides.
+    //
+    // So only patch Assets.LoadAnims at load time, and apply the Door patches
+    // once the anims exist.
+    public sealed class SelfSealingAirlocksMod : KMod.UserMod2
+    {
+        private static Harmony harmonyInstance;
+        private static bool doorPatchesApplied;
+
+        public override void OnLoad(Harmony harmony)
+        {
+            // Deliberately NOT calling base.OnLoad (PatchAll); see above.
+            harmonyInstance = harmony;
+            harmony.Patch(
+                AccessTools.Method(typeof(Assets), "LoadAnims"),
+                postfix: new HarmonyMethod(typeof(SelfSealingAirlocksMod), nameof(LoadAnims_Postfix)));
+        }
+
+        private static void LoadAnims_Postfix()
+        {
+            if (doorPatchesApplied)
+            {
+                return;
+            }
+            doorPatchesApplied = true;
+
+            harmonyInstance.CreateClassProcessor(typeof(SelfSealingAirlocks_Door_SetSimState)).Patch();
+            harmonyInstance.CreateClassProcessor(typeof(SelfSealingAirlocks_Door_RefreshControlState)).Patch();
+            harmonyInstance.CreateClassProcessor(typeof(SelfSealingAirlocks_Door_OnSpawn)).Patch();
+        }
+    }
+
     // Keeps airlock doors sealed in the sim unless the player set them to "Open".
     //
     // Vanilla Door.SetSimState digs out the door's solid cells whenever the door
